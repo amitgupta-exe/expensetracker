@@ -5,7 +5,7 @@ interface Expense {
   description?: string;
   amount: number;
   category: string;
-  date?: Date;
+  date?: string; // Changed from Date to string
 }
 
 interface PieChartProps {
@@ -13,7 +13,7 @@ interface PieChartProps {
   size?: number;
 }
 
-export default function PieChart({ expenses, size = 200 }: PieChartProps) {
+export default function PieChart({ expenses, size = 280 }: PieChartProps) {
   if (!expenses || expenses.length === 0) {
     return (
       <div className="flex items-center justify-center" style={{ width: size, height: size }}>
@@ -53,24 +53,101 @@ export default function PieChart({ expenses, size = 200 }: PieChartProps) {
 
   const colors = [
     '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-    '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16'
+    '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16',
+    '#6B7280' // Gray color for "Others"
   ];
 
-  const categories = Object.entries(categoryTotals)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 5); // Show top 5 categories
+  // Sort categories by amount (highest first)
+  const sortedCategories = Object.entries(categoryTotals)
+    .sort(([,a], [,b]) => b - a);
 
-  const chartData = categories.map(([category, amount], index) => ({
-    category,
-    amount,
-    percentage: (amount / totalAmount) * 100,
-    color: colors[index % colors.length]
-  }));
+  let chartData;
+  
+  if (sortedCategories.length <= 5) {
+    // If 5 or fewer categories, show all
+    chartData = sortedCategories.map(([category, amount], index) => ({
+      category,
+      amount,
+      percentage: (amount / totalAmount) * 100,
+      color: colors[index % colors.length]
+    }));
+  } else {
+    // If more than 5 categories, show top 4 + "Others"
+    const topCategories = sortedCategories.slice(0, 4);
+    const otherCategories = sortedCategories.slice(4);
+    
+    const othersAmount = otherCategories.reduce((sum, [, amount]) => sum + amount, 0);
+    const othersCount = otherCategories.length;
+    
+    chartData = [
+      ...topCategories.map(([category, amount], index) => ({
+        category,
+        amount,
+        percentage: (amount / totalAmount) * 100,
+        color: colors[index % colors.length]
+      })),
+      {
+        category: `Others (${othersCount} categories)`,
+        amount: othersAmount,
+        percentage: (othersAmount / totalAmount) * 100,
+        color: colors[4] // Use the 5th color for "Others"
+      }
+    ];
+  }
 
-  let currentAngle = 0;
   const radius = size / 2 - 20;
   const centerX = size / 2;
   const centerY = size / 2;
+
+  // Special case: if there's only one slice (100%), draw a circle instead of a path
+  if (chartData.length === 1) {
+    const singleData = chartData[0];
+    return (
+      <div className="flex flex-col items-center space-y-4">
+        <svg width={size} height={size} className="transform rotate-0">
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={radius}
+            fill={singleData.color}
+            stroke="#fff"
+            strokeWidth="2"
+            className="hover:opacity-80 transition-opacity duration-200"
+          >
+            <title>{`${singleData.category}: ₹${singleData.amount.toLocaleString()} (${singleData.percentage.toFixed(1)}%)`}</title>
+          </circle>
+        </svg>
+
+        {/* Legend */}
+        <div className="grid grid-cols-1 gap-2 text-sm max-w-xs">
+          <div className="flex items-center justify-between space-x-2">
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <div 
+                className="w-3 h-3 rounded-full flex-shrink-0" 
+                style={{ backgroundColor: singleData.color }}
+              />
+              <span className="text-gray-700 dark:text-gray-300 truncate text-xs">
+                {singleData.category}
+              </span>
+            </div>
+            <span className="text-gray-500 dark:text-gray-400 font-medium text-xs whitespace-nowrap">
+              ₹{singleData.amount.toLocaleString()} (100%)
+            </span>
+          </div>
+        </div>
+        
+        {/* Debug info - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-xs text-gray-400">
+            Single category: 100% | Categories: {Object.keys(categoryTotals).length}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Multiple slices - use path drawing
+  let currentAngle = 0;
 
   const createPath = (startAngle: number, endAngle: number) => {
     const start = polarToCartesian(centerX, centerY, radius, endAngle);
@@ -93,6 +170,9 @@ export default function PieChart({ expenses, size = 200 }: PieChartProps) {
     };
   }
 
+  // Verify that all percentages add up to 100%
+  const totalPercentage = chartData.reduce((sum, data) => sum + data.percentage, 0);
+  
   return (
     <div className="flex flex-col items-center space-y-4">
       <svg width={size} height={size} className="transform rotate-0">
@@ -109,28 +189,39 @@ export default function PieChart({ expenses, size = 200 }: PieChartProps) {
               stroke="#fff"
               strokeWidth="2"
               className="hover:opacity-80 transition-opacity duration-200"
-            />
+            >
+              <title>{`${data.category}: ₹${data.amount.toLocaleString()} (${data.percentage.toFixed(1)}%)`}</title>
+            </path>
           );
         })}
       </svg>
 
       {/* Legend */}
-      <div className="grid grid-cols-1 gap-2 text-sm">
+      <div className="grid grid-cols-1 gap-2 text-sm max-w-xs">
         {chartData.map((data) => (
-          <div key={data.category} className="flex items-center space-x-2">
-            <div 
-              className="w-3 h-3 rounded-full flex-shrink-0" 
-              style={{ backgroundColor: data.color }}
-            />
-            <span className="text-gray-700 dark:text-gray-300 truncate">
-              {data.category}
-            </span>
-            <span className="text-gray-500 dark:text-gray-400 font-medium">
-              {data.percentage.toFixed(1)}%
+          <div key={data.category} className="flex items-center justify-between space-x-2">
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <div 
+                className="w-3 h-3 rounded-full flex-shrink-0" 
+                style={{ backgroundColor: data.color }}
+              />
+              <span className="text-gray-700 dark:text-gray-300 truncate text-xs">
+                {data.category}
+              </span>
+            </div>
+            <span className="text-gray-500 dark:text-gray-400 font-medium text-xs whitespace-nowrap">
+              ₹{data.amount.toLocaleString()} ({data.percentage.toFixed(1)}%)
             </span>
           </div>
         ))}
       </div>
+      
+      {/* Debug info - remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs text-gray-400">
+          Total: {totalPercentage.toFixed(1)}% | Categories: {Object.keys(categoryTotals).length}
+        </div>
+      )}
     </div>
   );
 }

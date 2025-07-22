@@ -2,11 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
+@layer base {
+  html,
+  body {
+    @apply bg-white dark:bg-gray-950;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
+    @media (prefers-color-scheme: dark) {
+      color-scheme: dark;
+    }
+  }
+
+  /* Prevent flash of unstyled content */
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  /* Modal and Dialog Overrides */
+  .modal-backdrop {
+    @apply fixed inset-0 z-50;
+    z-index: 9999 !important;
+  }
+
+  .modal-dialog {
+    @apply relative;
+    z-index: 10000 !important;
+  }
+
+  /* Prevent scrolling when modal is open */
+  body.modal-open {
+    @apply overflow-hidden;
+  }
+}
+
+@layer utilities {
+  /* Ensure modals appear above everything */
+  [role="dialog"] {
+    z-index: 10000 !important;
   }
 }
