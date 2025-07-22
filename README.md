@@ -1,10 +1,10 @@
-# 💰 Expense Tracker
+# Expense Tracker
 
-My submission for Valar Digital assignment
+Submission for Valar Digital assignment. Hope you approve this.
 
 ![Expense Tracker Screenshot](public/image.png)
 
-## ✨ Features
+## Features
 
 **Expense Management**
 - Add, edit, and delete expenses with confirmation dialogs
@@ -25,8 +25,7 @@ My submission for Valar Digital assignment
 - Data preview and validation before import
 - Efficient batch database operations
 
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - **Node.js** (v18 or higher)
@@ -64,7 +63,7 @@ My submission for Valar Digital assignment
    http://localhost:5174
    ```
 
-## 🗃️ Database Setup
+## Database Setup
 
 ### Database Schema
 The application uses **SQLite** with **Prisma ORM** for data management.
@@ -96,25 +95,19 @@ npx prisma generate
 
 ---
 
-## 🏗️ **Development Approach**
+## Development Approach
 
-### **Architecture Strategy**
+### Architecture
 Built using **MVC pattern** with Remix handling server-side concerns and React managing client-side interactions. Components follow **Container-Presenter pattern** where route components manage data and state, while UI components focus purely on presentation.
 
-### **Technology Choices**
-- **Remix**: Server-side rendering with progressive enhancement for performance and SEO
-- **TypeScript**: Compile-time type safety across the entire application stack
-- **Prisma + SQLite**: Type-safe database operations with simple deployment
-- **Tailwind CSS**: Utility-first styling for rapid development and consistent design
-
-### **Component Organization**
+### Component Organization
 Modular architecture with feature-based components (ExpenseList, Analytics, FilterDialog) that communicate through props-down/events-up pattern. Each component has single responsibility and clear data flow.
 
-### **State Management**
+### State Management
 Hybrid approach using server state (Remix loaders) for initial data, client state (React hooks) for UI interactions, and optimistic updates for immediate user feedback while background operations complete.
 
-### **Performance Strategy**
+### Performance Strategy
 Client-side filtering for instant results, memoized calculations for expensive operations, and optimistic UI updates to minimize perceived latency. Custom SVG pie charts avoid external dependencies while providing full customization.
 
-### **Data Flow**
+### Data Flow
 CRUD operations use Remix actions for server-side validation and database operations, with immediate UI updates through optimistic rendering. File imports use multi-stage validation (client preview + server processing) for better user experience.
